@@ -12,7 +12,7 @@ export default function App() {
     <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-6 py-16 sm:px-8 sm:py-24">
       <SiteHero />
 
-      <main className="mb-24 flex flex-1 flex-col gap-14">
+      <main className="mb-12 flex flex-1 flex-col gap-14">
         <SitePlaceholders />
         <TopTracks />
         <RecentlyPlayed nowPlayingId={lastListened.track?.id} />
