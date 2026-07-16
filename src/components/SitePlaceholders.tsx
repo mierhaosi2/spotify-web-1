@@ -4,14 +4,6 @@ const sections = [
     body: 'Placeholder for roles, studios, and companies you’ve worked with.',
   },
   {
-    title: 'Recent',
-    body: 'Placeholder for recent press, launches, or studio notes.',
-  },
-  {
-    title: 'Selected Work',
-    body: 'Placeholder for selected projects and case studies.',
-  },
-  {
     title: 'Writing',
     body: 'Placeholder for essays and long-form notes.',
   },

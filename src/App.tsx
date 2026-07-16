@@ -1,23 +1,25 @@
 import { LastListened } from '@/components/LastListened'
+import { RecentlyPlayed } from '@/components/RecentlyPlayed'
+import { SiteHero } from '@/components/SiteHero'
 import { SitePlaceholders } from '@/components/SitePlaceholders'
-import { siteConfig } from '@/config/site'
+import { TopTracks } from '@/components/TopTracks'
+import { useLastListened } from '@/hooks/useLastListened'
 
 export default function App() {
+  const lastListened = useLastListened()
+
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-6 py-16 sm:px-8 sm:py-24">
-      <header className="mb-16 flex flex-col gap-3">
-        <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-          {siteConfig.name}
-        </h1>
-        <p className="text-lg text-muted-foreground">{siteConfig.title}</p>
-      </header>
+      <SiteHero />
 
-      <main className="mb-24 flex-1">
+      <main className="mb-24 flex flex-1 flex-col gap-14">
         <SitePlaceholders />
+        <TopTracks />
+        <RecentlyPlayed nowPlayingId={lastListened.track?.id} />
       </main>
 
       <footer className="mt-auto">
-        <LastListened />
+        <LastListened state={lastListened} />
       </footer>
     </div>
   )

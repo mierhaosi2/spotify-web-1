@@ -26,6 +26,16 @@ export type SpotifyTrack = {
   }
 }
 
+export type SpotifyMe = {
+  id: string
+  display_name: string
+  email?: string
+  images: SpotifyImage[]
+  external_urls: {
+    spotify: string
+  }
+}
+
 export type PlayingResponse = {
   is_playing?: boolean
   playing?: boolean
@@ -41,14 +51,28 @@ export type RecentlyPlayedResponse = {
   next?: string | null
 }
 
-export type LastListenedTrack = {
+export type TopTracksResponse = {
+  items: SpotifyTrack[]
+  total?: number
+  limit?: number
+  offset?: number
+}
+
+export type TrackSummary = {
   id: string
   name: string
   artists: string
   albumArtUrl: string | null
   spotifyUrl: string
+}
+
+export type LastListenedTrack = TrackSummary & {
   isPlaying: boolean
   playedAt: string | null
+}
+
+export type RecentlyPlayedItem = TrackSummary & {
+  playedAt: string
 }
 
 async function apiFetch<T>(path: string): Promise<T> {
@@ -64,6 +88,10 @@ async function apiFetch<T>(path: string): Promise<T> {
   return res.json() as Promise<T>
 }
 
+export function getMe() {
+  return apiFetch<SpotifyMe>('/spotify/auto/me')
+}
+
 export function getPlaying() {
   return apiFetch<PlayingResponse>('/spotify/auto/playing')
 }
@@ -74,12 +102,33 @@ export function getRecentlyPlayed(limit = 1) {
   )
 }
 
-function pickAlbumArt(images: SpotifyImage[] | undefined): string | null {
-  if (!images?.length) return null
-  const sorted = [...images].sort(
-    (a, b) => (a.width ?? 0) - (b.width ?? 0),
+export function getTopTracks(
+  timeRange: 'short_term' | 'medium_term' | 'long_term' = 'medium_term',
+  limit = 8,
+) {
+  return apiFetch<TopTracksResponse>(
+    `/spotify/auto/top-tracks?time_range=${timeRange}&limit=${limit}`,
   )
-  return sorted.find((img) => (img.width ?? 0) >= 64)?.url ?? sorted[0]?.url ?? null
+}
+
+export function pickAlbumArt(
+  images: SpotifyImage[] | undefined,
+): string | null {
+  if (!images?.length) return null
+  const sorted = [...images].sort((a, b) => (a.width ?? 0) - (b.width ?? 0))
+  return (
+    sorted.find((img) => (img.width ?? 0) >= 64)?.url ?? sorted[0]?.url ?? null
+  )
+}
+
+export function toTrackSummary(track: SpotifyTrack): TrackSummary {
+  return {
+    id: track.id,
+    name: track.name,
+    artists: track.artists.map((a) => a.name).join(', '),
+    albumArtUrl: pickAlbumArt(track.album.images),
+    spotifyUrl: track.external_urls.spotify,
+  }
 }
 
 function toLastListened(
@@ -87,11 +136,7 @@ function toLastListened(
   opts: { isPlaying: boolean; playedAt: string | null },
 ): LastListenedTrack {
   return {
-    id: track.id,
-    name: track.name,
-    artists: track.artists.map((a) => a.name).join(', '),
-    albumArtUrl: pickAlbumArt(track.album.images),
-    spotifyUrl: track.external_urls.spotify,
+    ...toTrackSummary(track),
     isPlaying: opts.isPlaying,
     playedAt: opts.playedAt,
   }
@@ -117,4 +162,24 @@ export async function fetchLastListened(): Promise<LastListenedTrack | null> {
     isPlaying: false,
     playedAt: first.played_at,
   })
+}
+
+export async function fetchRecentlyPlayedList(
+  limit = 8,
+): Promise<RecentlyPlayedItem[]> {
+  const recent = await getRecentlyPlayed(limit)
+  return (recent.items ?? [])
+    .filter((item) => item.track)
+    .map((item) => ({
+      ...toTrackSummary(item.track),
+      playedAt: item.played_at,
+    }))
+}
+
+export async function fetchTopTracks(
+  timeRange: 'short_term' | 'medium_term' | 'long_term' = 'medium_term',
+  limit = 8,
+): Promise<TrackSummary[]> {
+  const data = await getTopTracks(timeRange, limit)
+  return (data.items ?? []).map(toTrackSummary)
 }

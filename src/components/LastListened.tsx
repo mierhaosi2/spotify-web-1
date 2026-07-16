@@ -1,11 +1,21 @@
 import { siteConfig } from '@/config/site'
-import { useLastListened } from '@/hooks/useLastListened'
+import type { LastListenedTrack } from '@/lib/api'
 import { formatPlayedAt } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { SpotifyIcon } from '@/components/SpotifyIcon'
 
-export function LastListened() {
-  const { track, loading, error } = useLastListened()
+type LastListenedState = {
+  track: LastListenedTrack | null
+  loading: boolean
+  error: string | null
+}
+
+type LastListenedProps = {
+  state: LastListenedState
+}
+
+export function LastListened({ state }: LastListenedProps) {
+  const { track, loading, error } = state
   const timeLabel = formatPlayedAt(track?.playedAt ?? null)
 
   return (
